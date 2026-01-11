@@ -8,16 +8,28 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
-// 1. SWAGGER CONFIG
+// SWAGGER CONFIG
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 2. DATABASE CONFIG
+// DATABASE CONFIG
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 3. REGISTER SERVICE
+// REGISTER SERVICE
 builder.Services.AddScoped<IContactService, ContactService>();
+
+// ALLOW FRONTEND - Step 1
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173") // The URL of your React App
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
 var app = builder.Build();
 
@@ -29,6 +41,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(); // This creates the page at /swagger/index.html
     // -----------------------------
 }
+
+// ALLOW FRONTEND - Step 2
+app.UseCors("AllowReactApp");
 
 app.UseAuthorization();
 
